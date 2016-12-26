@@ -5,10 +5,11 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\..\AMQP-CPP; ..\..\..\poco-1.7.6\Net\include;..\..\..\poco-1.7.6\Foundation\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\AMQP-CPP;..\..\..\poco-1.7.6\Net\include;..\..\..\poco-1.7.6\Foundation\include;..\..\..\libpqmxx\include;%PGDIR%\include\server;%PGDIR%\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_UNICODE;UNICODE;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(OutputPath);..\..\..\poco-1.7.6\lib\;..\..\..\AMQP-CPP\bin\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OutputPath);..\..\..\poco-1.7.6\lib\;..\..\..\libpqmxx\bin\Debug\;..\..\..\AMQP-CPP\bin\Debug;%PGDIR%\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>

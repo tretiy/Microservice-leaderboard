@@ -2,11 +2,14 @@
 //
 
 #include "stdafx.h"
-#include "../RatingMessagesManagment/RatingMessageSender.h"
+#include <chrono>
+#include "../RatingMessagesManagment/RatingMessageSenderAMQP.h"
 
+
+using namespace std::chrono;
 int main()
 {
-	RatingMessageSender messageSender;
+	RatingMessages::RatingMessageSenderAMQP messageSender;
 	std::string command;
 	auto times = 0;
 	while(command !="exit")
@@ -21,14 +24,14 @@ int main()
 		{
 			for (auto i = 0; i < times; ++i)
 			{
-				messageSender.sendUserRegistered(i, "reg name");
+				messageSender.sendUserRegistered(i, "user#" + std::to_string(i));
 			}
 		}
 		if (command == "ren")
 		{
 			for (auto i = 0; i < times; ++i)
 			{
-				messageSender.sendUserRenamed(i, "new name");
+				messageSender.sendUserRenamed(i, "userRenamed#" + std::to_string(i));
 			}
 		}
 		if (command == "conn")
@@ -50,14 +53,14 @@ int main()
 		{
 			for (auto i = 0; i < times; ++i)
 			{
-				messageSender.sendUserDeal(i, std::chrono::system_clock::now(), 300);
+				messageSender.sendUserDeal(i,  system_clock::to_time_t(system_clock::now()) , 300);
 			}
 		}
 		if (command == "won")
 		{
 			for (auto i = 0; i < times; ++i)
 			{
-				messageSender.sendUserDealWon(i, std::chrono::system_clock::now(), 300);
+				messageSender.sendUserDealWon(i, system_clock::to_time_t(system_clock::now()), 300);
 			}
 		}
 		std::cout << "\n enter next command \t";

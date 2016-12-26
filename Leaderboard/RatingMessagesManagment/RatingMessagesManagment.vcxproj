@@ -77,10 +77,11 @@
       <SDLCheck>true</SDLCheck>
     </ClCompile>
     <ProjectReference>
-      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <Lib>
       <AdditionalDependencies>amqp-cpp.lib;PocoHandler.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutputPath);..\..\..\poco-1.7.6\lib\;..\..\..\libpqmxx\bin\Debug\;..\..\..\AMQP-CPP\bin\Debug;%PGDIR%\lib\;</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -117,10 +118,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="RatingMessageSender.h" />
+    <ClInclude Include="IMessageSender.h" />
+    <ClInclude Include="RatingMessageSenderAMQP.h" />
+    <ClInclude Include="RatingMessageSenderDB.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RatingMessageSender.cpp" />
+    <ClCompile Include="RatingMessageSenderAMQP.cpp" />
+    <ClCompile Include="RatingMessageSenderDB.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

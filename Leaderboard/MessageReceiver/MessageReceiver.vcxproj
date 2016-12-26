@@ -96,7 +96,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>amqp-cpp.lib;PocoHandler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>amqp-cpp.lib;PocoHandler.lib;libpq.lib;libpqmxx.lib;RatingMessagesManagment.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

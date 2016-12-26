@@ -10,35 +10,57 @@
 #include "../PocoHandler/SimplePocoHandler.h"
 #include "../../../AMQP-CPP/amqpcpp/login.h"
 #include "../../../AMQP-CPP/amqpcpp/connection.h"
+#include "../RatingMessagesManagment/RatingMessageSenderDB.h"
 
 int main()
 {
 	SimplePocoHandler handler("localhost", 5672);
+	RatingMessages::RatingMessageSenderDB dbSender;
 
 	AMQP::Connection connection(&handler, AMQP::Login("guest", "guest"), "/");
 
 	AMQP::Channel channel(&connection);
 	channel.declareQueue("user_registration");
 	channel.consume("user_registration", AMQP::noack).onReceived(
-		[&channel](const AMQP::Message &message,
+		[&channel, &dbSender](const AMQP::Message &message,
 			uint64_t deliveryTag,
 			bool redelivered)
 	{
 		std::cout << " [x] Received registration " << message.message() << std::endl;
+		//parse message
+		long id;
+		std::string name;
+		bool isNewUser;
+		std::stringstream ss(message.message());
+		ss >> id >> name >> isNewUser;
+		if (isNewUser)
+			dbSender.sendUserRegistered(id, name);
+		else
+			dbSender.sendUserRenamed(id, name);
+
 	});
 
 	channel.declareQueue("user_connection");
 	channel.consume("user_connection", AMQP::noack).onReceived(
-		[&channel](const AMQP::Message &message,
+		[&channel, &dbSender](const AMQP::Message &message,
 			uint64_t deliveryTag,
 			bool redelivered)
 	{
 		std::cout << " [x] Received connection " << message.message() << std::endl;
+		//parse message
+		long id;
+		bool isConnected;
+		std::stringstream ss(message.message());
+		ss >> id >> isConnected;
+		if (isConnected)
+			dbSender.sendUserConnected(id);
+		else
+			dbSender.sendUserDisconnected(id);
 	});
 
 	channel.declareQueue("user_deal");
 	channel.consume("user_deal", AMQP::noack).onReceived(
-		[&channel](const AMQP::Message &message,
+		[&channel, &dbSender](const AMQP::Message &message,
 			uint64_t deliveryTag,
 			bool redelivered)
 	{
@@ -48,6 +70,11 @@ int main()
 		bool isWon = false;
 
 		messageStream >> id >> time >> amount >> isWon;
+
+		if (isWon)
+		{
+			dbSender.sendUserDealWon(id, time, amount);
+		}
 
 		tm time_tm;
 		localtime_s(&time_tm, &time);

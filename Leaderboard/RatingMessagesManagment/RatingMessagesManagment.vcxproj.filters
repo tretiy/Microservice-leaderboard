@@ -15,12 +15,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RatingMessageSender.h">
+    <ClInclude Include="IMessageSender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RatingMessageSenderAMQP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RatingMessageSenderDB.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RatingMessageSender.cpp">
+    <ClCompile Include="RatingMessageSenderAMQP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RatingMessageSenderDB.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
