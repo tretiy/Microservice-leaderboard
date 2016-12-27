@@ -9,11 +9,11 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(OutputPath);..\..\..\poco-1.7.6\lib\;..\..\..\libpqmxx\bin\Debug\;..\..\..\AMQP-CPP\bin\Debug;%PGDIR%\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OutputPath);..\..\..\poco-1.7.6\lib\;..\..\..\libpqmxx\bin\$(Configuration);..\..\..\AMQP-CPP\bin\$(Configuration);%PGDIR%\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(OutputPath);..\..\..\poco-1.7.6\lib\;..\..\..\AMQP-CPP\bin\Debug;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OutputPath);..\..\..\poco-1.7.6\lib\;..\..\..\AMQP-CPP\bin\$(Configuration)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup />
