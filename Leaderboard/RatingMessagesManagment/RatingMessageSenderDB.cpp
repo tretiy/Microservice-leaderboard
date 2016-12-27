@@ -21,13 +21,16 @@ namespace RatingMessages
 	{
 		try
 		{
+			dbConnection.begin();
 			dbConnection.execute(R"(
 		INSERT INTO users(userid,username,connected)
 		VALUES ($1,$2, 'false')
 		)", id, name);
+			dbConnection.commit();
 		}
 		catch (db::postgres::ExecutionException& e)
 		{
+			dbConnection.rollback();
 			std::cerr << e.what() << std::endl;
 		}
 	}
@@ -36,14 +39,17 @@ namespace RatingMessages
 	{	
 		try
 		{
+			dbConnection.begin();
 			dbConnection.execute(R"(
-		UPDATE users
-		SET username=$2
-		WHERE userid=$1
-		)", id, name);
+									UPDATE users
+									SET username=$2
+									WHERE userid=$1
+									)", id, name);
+			dbConnection.commit();
 		}
 		catch(db::postgres::ExecutionException& e)
 		{
+			dbConnection.rollback();
 			std::cerr << e.what() << std::endl;
 		}
 	}
@@ -56,13 +62,16 @@ namespace RatingMessages
 	{
 		try
 		{
+			dbConnection.commit();
 			dbConnection.execute(R"(
-		INSERT INTO transactions(userid,amount,date)
-		VALUES ($1,$2, $3::timestamptz)
-		)", id, amount, makeTimeString(time));
+								INSERT INTO transactions(userid,amount,date)
+								VALUES ($1,$2, $3::timestamptz)
+								)", id, amount, makeTimeString(time));
+			dbConnection.commit();
 		}
 		catch (db::postgres::ExecutionException& e)
 		{
+			dbConnection.rollback();
 			std::cerr << e.what() << std::endl;
 		}
 	}
@@ -71,14 +80,17 @@ namespace RatingMessages
 	{
 		try
 		{
+			dbConnection.commit();
 			dbConnection.execute(R"(
-		UPDATE users
-		SET connected=$2
-		WHERE userid=$1
-		)", id, isConnected);
+								UPDATE users
+								SET connected=$2
+								WHERE userid=$1
+								)", id, isConnected);
+			dbConnection.commit();
 		}
 		catch (db::postgres::ExecutionException& e)
 		{
+			dbConnection.rollback();
 			std::cerr << e.what() << std::endl;
 		}
 	}

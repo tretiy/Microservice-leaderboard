@@ -9,8 +9,10 @@ UsersRatingCache::UsersRatingCache()
 	try
 	{
 		dbConnection.connect("postgresql://postgres:tree328@localhost:5433/ratingDB");
+		dbConnection.begin();
 		makeRatingCache();
 		makeNamesAndConnectedCaches();
+		dbConnection.commit();
 	}
 	catch (db::postgres::ConnectionException& e)
 	{
@@ -33,6 +35,7 @@ void UsersRatingCache::makeRatingCache()
 {
 	try
 	{
+		dbConnection.begin();
 		auto&& rows = dbConnection.execute(R"(
 			SELECT userid, sum(rating.wonsum) as total
 			FROM rating
@@ -49,9 +52,11 @@ void UsersRatingCache::makeRatingCache()
 			ratingPosToUser[row.as<int>(0)] = numberInRating - 1;
 			++numberInRating;
 		}
+		dbConnection.commit();
 	}
 	catch (db::postgres::ExecutionException& e)
 	{
+		dbConnection.rollback();
 		std::cerr << e.what() << std::endl;
 	}
 }
@@ -60,6 +65,7 @@ void UsersRatingCache::makeNamesAndConnectedCaches()
 {
 	try
 	{
+		dbConnection.begin();
 		auto&& rows = dbConnection.execute(R"(
 			SELECT userid, username, connected 
 			FROM users
@@ -71,9 +77,11 @@ void UsersRatingCache::makeNamesAndConnectedCaches()
 			if (row.as<bool>(2))
 				connectedCache.insert(id);
 		}
+		dbConnection.commit();
 	}
 	catch (db::postgres::ExecutionException& e)
 	{
+		dbConnection.rollback();
 		std::cerr << e.what() << std::endl;
 	}
 }
@@ -142,15 +150,18 @@ std::string UsersRatingCache::getUserNameString(int id)
 		//check in cache
 		if (namesCache.find(id) != namesCache.end())
 			return namesCache[id];
+		dbConnection.begin();
 		auto&& result = dbConnection.execute(R"(SELECT username FROM users WHERE  userid=$1)", id);
 		if(result.count())
 		{
 			namesCache[id] = result.as<std::string>(0);
 			return result.as<std::string>(0);
 		}
+		dbConnection.commit();
 	}
 	catch (db::postgres::ExecutionException& e)
 	{
+		dbConnection.rollback();
 		std::cerr << e.what() << std::endl;
 	}
 
