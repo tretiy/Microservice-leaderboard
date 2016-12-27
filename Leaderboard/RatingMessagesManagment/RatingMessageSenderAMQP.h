@@ -11,19 +11,21 @@ namespace RatingMessages
 		AMQP::Channel channel;
 		std::thread loopThread;
 		std::thread messageThread;
+	public:
 
 		static const std::string RegQueue;
 		static const std::string DealQueue;
 		static const std::string ConnQueue;
-	public:
+		static const std::string ExchangePoint;
+
 		RatingMessageSenderAMQP();
-		explicit RatingMessageSenderAMQP(std::string host, uint16_t port = 5672);
+		explicit RatingMessageSenderAMQP(const std::string& host, uint16_t port = 5672);
 		virtual ~RatingMessageSenderAMQP();
 
-		void sendEnvelopeToChannel(AMQP::Envelope& env, std::string&& channelName);
+		void sendEnvelopeToChannel(const AMQP::Envelope& env, const std::string& channelName, const std::string& exchangeName = std::string{ "" });
 
-		void sendUserRegistered(int id, std::string name) override;
-		void sendUserRenamed(int id, std::string name) override;
+		void sendUserRegistered(int id, const std::string& name) override;
+		void sendUserRenamed(int id, const std::string& name) override;
 
 		void sendUserDeal(int id, time_t time, int amount) override;
 		void sendUserDealWon(int id, time_t time, int amount) override;

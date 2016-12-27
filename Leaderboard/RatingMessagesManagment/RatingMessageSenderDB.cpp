@@ -2,31 +2,50 @@
 #include "postgres-exceptions.h"
 #include <iostream>
 #include <ctime>
-#include <iomanip>
-
 
 namespace RatingMessages
 {
 	RatingMessageSenderDB::RatingMessageSenderDB()
 	{
-		dbConnection.connect("postgresql://postgres:tree328@localhost:5433/ratingDB");
+		try
+		{
+			dbConnection.connect("postgresql://postgres:tree328@localhost:5433/ratingDB");
+		}
+		catch(db::postgres::ConnectionException& e)
+		{
+			std::cerr << e.what() << std::endl;
+		}
 	}
 
-	void RatingMessageSenderDB::sendUserRegistered(int id, std::string name)
+	void RatingMessageSenderDB::sendUserRegistered(int id, const std::string& name)
 	{
-		dbConnection.execute(R"(
+		try
+		{
+			dbConnection.execute(R"(
 		INSERT INTO users(userid,username,connected)
 		VALUES ($1,$2, 'false')
 		)", id, name);
+		}
+		catch (db::postgres::ExecutionException& e)
+		{
+			std::cerr << e.what() << std::endl;
+		}
 	}
 
-	void RatingMessageSenderDB::sendUserRenamed(int id, std::string name)
-	{
-		dbConnection.execute(R"(
+	void RatingMessageSenderDB::sendUserRenamed(int id, const std::string& name)
+	{	
+		try
+		{
+			dbConnection.execute(R"(
 		UPDATE users
 		SET username=$2
 		WHERE userid=$1
 		)", id, name);
+		}
+		catch(db::postgres::ExecutionException& e)
+		{
+			std::cerr << e.what() << std::endl;
+		}
 	}
 
 	void RatingMessageSenderDB::sendUserDeal(int id, time_t time, int amount)
@@ -37,28 +56,39 @@ namespace RatingMessages
 	{
 		try
 		{
-			char timeStr[100];
-			tm tm;
-			localtime_s(&tm, &time);
-			std::strftime(timeStr, sizeof(timeStr), "%F %T%z", &tm);
 			dbConnection.execute(R"(
 		INSERT INTO transactions(userid,amount,date)
 		VALUES ($1,$2, $3::timestamptz)
-		)", id, amount, std::string(timeStr));
+		)", id, amount, makeTimeString(time));
 		}
 		catch (db::postgres::ExecutionException& e)
 		{
-			std::cout << e.what();
+			std::cerr << e.what() << std::endl;
 		}
 	}
 
 	void RatingMessageSenderDB::sendUserConnected(int id, bool isConnected)
 	{
-		dbConnection.execute(R"(
+		try
+		{
+			dbConnection.execute(R"(
 		UPDATE users
 		SET connected=$2
 		WHERE userid=$1
 		)", id, isConnected);
+		}
+		catch (db::postgres::ExecutionException& e)
+		{
+			std::cerr << e.what() << std::endl;
+		}
+	}
+	std::string RatingMessageSenderDB::makeTimeString(const time_t& time)
+	{
+		char timeStr[100];
+		tm tm;
+		localtime_s(&tm, &time);
+		strftime(timeStr, sizeof(timeStr), "%F %T%z", &tm);
+		return std::string{ timeStr };
 	}
 }
 

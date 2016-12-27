@@ -4,13 +4,11 @@
 #include "stdafx.h"
 #include <ostream>
 #include <sstream>
-#include <chrono>
-#include <ctime>
-#include <iomanip>
 #include "../PocoHandler/SimplePocoHandler.h"
 #include "../../../AMQP-CPP/amqpcpp/login.h"
 #include "../../../AMQP-CPP/amqpcpp/connection.h"
 #include "../RatingMessagesManagment/RatingMessageSenderDB.h"
+#include "../RatingMessagesManagment/RatingMessageSenderAMQP.h"
 
 int main()
 {
@@ -20,11 +18,11 @@ int main()
 	AMQP::Connection connection(&handler, AMQP::Login("guest", "guest"), "/");
 
 	AMQP::Channel channel(&connection);
-	channel.declareQueue("user_registration");
-	channel.consume("user_registration", AMQP::noack).onReceived(
-		[&channel, &dbSender](const AMQP::Message &message,
-			uint64_t deliveryTag,
-			bool redelivered)
+
+
+	auto registrationReceivedCallback = [&channel, &dbSender](const AMQP::Message &message,
+		uint64_t deliveryTag,
+		bool redelivered)
 	{
 		std::cout << " [x] Received registration " << message.message() << std::endl;
 		//parse message
@@ -38,13 +36,11 @@ int main()
 		else
 			dbSender.sendUserRenamed(id, name);
 
-	});
+	};
 
-	channel.declareQueue("user_connection");
-	channel.consume("user_connection", AMQP::noack).onReceived(
-		[&channel, &dbSender](const AMQP::Message &message,
-			uint64_t deliveryTag,
-			bool redelivered)
+	auto connectionReceivedCallback = [&channel, &dbSender](const AMQP::Message &message,
+		uint64_t deliveryTag,
+		bool redelivered)
 	{
 		std::cout << " [x] Received connection " << message.message() << std::endl;
 		//parse message
@@ -56,13 +52,11 @@ int main()
 			dbSender.sendUserConnected(id);
 		else
 			dbSender.sendUserDisconnected(id);
-	});
+	};
 
-	channel.declareQueue("user_deal");
-	channel.consume("user_deal", AMQP::noack).onReceived(
-		[&channel, &dbSender](const AMQP::Message &message,
-			uint64_t deliveryTag,
-			bool redelivered)
+	auto dealReceivedCallback = [&channel, &dbSender](const AMQP::Message &message,
+		uint64_t deliveryTag,
+		bool redelivered)
 	{
 		std::stringstream messageStream(message.message());
 		long id, amount;
@@ -76,11 +70,38 @@ int main()
 			dbSender.sendUserDealWon(id, time, amount);
 		}
 
-		tm time_tm;
-		localtime_s(&time_tm, &time);
+		std::cout << " [x] Received deal " << (isWon ? "won " : "") << message.message() << std::endl;
+	};
 
-		std::cout << " [x] Received deal " << (isWon ? "won " : "") << message.message() << "\t" << std::put_time(&time_tm, "%c %Z") << std::endl;
-	});
+	AMQP::QueueCallback callbackRegistration =
+		[&](const std::string &name, int msgcount, int consumercount)
+	{
+		channel.bindQueue(RatingMessages::RatingMessageSenderAMQP::ExchangePoint, name, name);
+		channel.consume(name, AMQP::noack).onReceived(registrationReceivedCallback);
+	};
+
+	AMQP::QueueCallback callbackConnection =
+		[&](const std::string &name, int msgcount, int consumercount)
+	{
+		channel.bindQueue(RatingMessages::RatingMessageSenderAMQP::ExchangePoint, name, name );
+		channel.consume(name, AMQP::noack).onReceived(connectionReceivedCallback);
+	};
+
+	AMQP::QueueCallback callbackDeal =
+		[&](const std::string &name, int msgcount, int consumercount)
+	{
+		channel.bindQueue(RatingMessages::RatingMessageSenderAMQP::ExchangePoint, name, name);
+		channel.consume(name, AMQP::noack).onReceived(dealReceivedCallback);
+	};
+
+	AMQP::SuccessCallback successDeclareExchange = [&]()
+	{
+		channel.declareQueue(RatingMessages::RatingMessageSenderAMQP::RegQueue, AMQP::noack).onSuccess(callbackRegistration);
+		channel.declareQueue(RatingMessages::RatingMessageSenderAMQP::ConnQueue, AMQP::noack).onSuccess(callbackConnection);
+		channel.declareQueue(RatingMessages::RatingMessageSenderAMQP::DealQueue, AMQP::noack).onSuccess(callbackDeal);
+	};
+
+	channel.declareExchange(RatingMessages::RatingMessageSenderAMQP::ExchangePoint, AMQP::direct).onSuccess(successDeclareExchange);
 
 	std::cout << " [*] Waiting for messages. To exit press CTRL-C\n";
 	handler.loop();

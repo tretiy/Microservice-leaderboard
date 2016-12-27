@@ -27,14 +27,14 @@ private:
 
     void close();
 
-    virtual void onData(
-            AMQP::Connection *connection, const char *data, size_t size);
+	void onData(
+            AMQP::Connection *connection, const char *data, size_t size) override;
 
-    virtual void onConnected(AMQP::Connection *connection);
+	void onConnected(AMQP::Connection *connection) override;
 
-    virtual void onError(AMQP::Connection *connection, const char *message);
+	void onError(AMQP::Connection *connection, const char *message) override;
 
-    virtual void onClosed(AMQP::Connection *connection);
+	void onClosed(AMQP::Connection *connection) override;
 
     void sendDataFromBuffer();
 
