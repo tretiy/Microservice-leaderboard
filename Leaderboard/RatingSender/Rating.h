@@ -2,14 +2,14 @@
 #include <string>
 struct RatingLine
 {
-	int position = 0;
+	unsigned int position = 0;
 	int id = -1;
 	long long rating = 0;
 	std::string name = "";
 
 	RatingLine() = default;
 	RatingLine(const RatingLine& other) = default;
-	RatingLine(int _pos, int _id, long long _rating):
+	RatingLine(unsigned int _pos, int _id, long long _rating):
 	position{_pos},
 	id{_id},
 	rating{_rating}

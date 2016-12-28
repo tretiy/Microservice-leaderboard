@@ -11,16 +11,13 @@
 
 std::atomic<bool> runThread = true;
 
-void ratingSendRoutine(UsersRatingCache* cache)
+void ratingSendRoutine(UsersRatingCache& cache)
 {
 	while (runThread)
 	{
-		if (cache != nullptr)
-		{
-			cache->invalidateCaches();
-			auto ratings = cache->getMessagesToSend();
-			std::cout << "got a " << ratings.size() << " rating messages" << std::endl;
-		}
+		cache.invalidateCaches();
+		auto ratings = cache.getMessagesToSend();
+		std::cout << "got a " << ratings.size() << " rating messages" << std::endl;
 
 		std::this_thread::sleep_for(std::chrono::minutes(1));
 	}
@@ -28,8 +25,8 @@ void ratingSendRoutine(UsersRatingCache* cache)
 
 int main()
 {
-	UsersRatingCache* ratingCache = new UsersRatingCache();
-	std::thread ratingSendThread{ ratingSendRoutine, ratingCache};
+	UsersRatingCache ratingCache;
+	std::thread ratingSendThread{ &ratingSendRoutine, std::ref(ratingCache)};
 	SimplePocoHandler handler("localhost", 5672);
 
 	AMQP::Connection connection(&handler, AMQP::Login("guest", "guest"), "/");
@@ -45,7 +42,7 @@ int main()
 		std::string name;
 		std::stringstream ss(message.message());
 		ss >> id >> name;
-		ratingCache->updateNamesCache(id, name);
+		ratingCache.updateNamesCache(id, name);
 	};
 
 	auto connectionReceivedCallback = [&channel, &ratingCache](const AMQP::Message &message,
@@ -56,7 +53,7 @@ int main()
 		bool isConnected;
 		std::stringstream ss(message.message());
 		ss >> id >> isConnected;
-		ratingCache->updateConnectedCache(id, isConnected);
+		ratingCache.updateConnectedCache(id, isConnected);
 	};
 
 	auto dealReceivedCallback = [&channel, &ratingCache](const AMQP::Message &message,
@@ -72,7 +69,7 @@ int main()
 
 		if (isWon)
 		{
-			ratingCache->updateRatingCache(id, amount);
+			ratingCache.updateRatingCache(id, amount);
 		}
 	};
 

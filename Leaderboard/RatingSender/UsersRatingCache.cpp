@@ -1,7 +1,6 @@
 #include "UsersRatingCache.h"
 #include "postgres-exceptions.h"
 #include <iostream>
-#include <iterator>
 #include <algorithm>
 
 UsersRatingCache::UsersRatingCache()
@@ -26,15 +25,12 @@ UsersRatingCache::~UsersRatingCache()
 	
 }
 
-void UsersRatingCache::invalidateCaches()
-{
-	// TODO
-}
-
 void UsersRatingCache::makeRatingCache()
 {
 	try
 	{
+		std::lock_guard<std::mutex> lock{ ratingMutex };
+
 		dbConnection.begin();
 		auto&& rows = dbConnection.execute(R"(
 			SELECT userid, sum(rating.wonsum) as total
@@ -45,7 +41,7 @@ void UsersRatingCache::makeRatingCache()
 		ratingCache.resize(rows.count());
 		ratingPosToUser.reserve(rows.count());
 		ratingPosToUser.clear();
-		int numberInRating = 1;
+		unsigned int numberInRating = 1;
 		for(auto& row : rows)
 		{
 			ratingCache.push_back(RatingLine{ numberInRating, row.as<int>(0), row.as<long long>(1) });
@@ -65,6 +61,7 @@ void UsersRatingCache::makeNamesAndConnectedCaches()
 {
 	try
 	{
+		std::lock_guard<std::mutex, std::mutex> lock{ namesMutex, positionMutex };
 		dbConnection.begin();
 		auto&& rows = dbConnection.execute(R"(
 			SELECT userid, username, connected 
@@ -88,11 +85,13 @@ void UsersRatingCache::makeNamesAndConnectedCaches()
 
 void UsersRatingCache::updateNamesCache(int id, const std::string& newName)
 {
+	std::lock_guard<std::mutex> lock{ namesMutex};
 	namesCache[id] = newName;
 }
 
 void UsersRatingCache::updateConnectedCache(int id, bool isConnected)
 {
+	std::lock_guard<std::mutex> lock{ connectedMutex };
 	if (isConnected)
 		connectedCache.insert(id);
 	else
@@ -101,10 +100,30 @@ void UsersRatingCache::updateConnectedCache(int id, bool isConnected)
 
 void UsersRatingCache::updateRatingCache(int id, int wonAmount)
 {
+	std::lock_guard<std::mutex> lock{ ratingMutex };
 	auto userpoIter = ratingPosToUser.find(id);
+	auto oldPosition = ratingCache.size();
 	if (userpoIter != ratingPosToUser.end())
 	{
-		ratingCache[userpoIter->second].rating += wonAmount; // before next getUserRating Cache should be reordered
+		oldPosition = userpoIter->second;
+		ratingCache[oldPosition].rating += wonAmount; 
+	}
+	else
+	{
+		ratingCache.push_back(RatingLine{ oldPosition, id, wonAmount });
+	}
+	// now we should find new location for this user in rating
+	// buble partial sorting
+	for(auto i = oldPosition; i > 0; --i)
+	{
+		if(ratingCache[i].rating > ratingCache[i-1].rating)
+		{
+			std::swap(ratingCache[i], ratingCache[i - 1]);
+		}
+		else
+		{
+			break;
+		}
 	}
 }
 
@@ -154,6 +173,7 @@ std::string UsersRatingCache::getUserNameString(int id)
 		auto&& result = dbConnection.execute(R"(SELECT username FROM users WHERE  userid=$1)", id);
 		if(result.count())
 		{
+			std::lock_guard<std::mutex> lock{ namesMutex};
 			namesCache[id] = result.as<std::string>(0);
 			return result.as<std::string>(0);
 		}
