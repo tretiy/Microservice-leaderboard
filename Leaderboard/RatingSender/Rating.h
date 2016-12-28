@@ -18,7 +18,7 @@ struct RatingLine
 	}
 	operator std::string()
 	{
-		return std::to_string(position) + " " + std::to_string(id) + 
-					" " + 	std::to_string(rating) + " " + name;
+		return std::to_string(position) + " " + std::to_string(id) +
+			" " + std::to_string(rating) + " " + name + " ";
 	};
 };

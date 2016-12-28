@@ -9,7 +9,7 @@ namespace RatingMessages
 	{
 		try
 		{
-			dbConnection.connect("postgresql://postgres:tree328@localhost:5433/ratingDB");
+			dbConnection.connect("postgresql://postgres@localhost:5433/ratingDB");
 		}
 		catch(db::postgres::ConnectionException& e)
 		{

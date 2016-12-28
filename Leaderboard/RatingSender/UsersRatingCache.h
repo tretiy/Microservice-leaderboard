@@ -24,7 +24,7 @@ class UsersRatingCache
 	void makeRatingCache();
 	void makeNamesAndConnectedCaches();
 	std::string getUserNameString(int id);
-	std::vector<RatingLine> getUserRating(int id);
+	std::string getRatingString(int id, std::vector<RatingLine>& ratingLines);
 public:
 	UsersRatingCache();
 	~UsersRatingCache();
@@ -32,6 +32,7 @@ public:
 	void updateNamesCache(int id, const std::string& newName);
 	void updateConnectedCache(int id, bool isConnected);
 	void updateRatingCache(int id, int wonAmount);
+	std::string getUserRating(int id);
 	std::vector<std::string> getMessagesToSend();
 };
 

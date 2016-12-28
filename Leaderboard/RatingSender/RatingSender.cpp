@@ -1,6 +1,3 @@
-
-
-
 #include "UsersRatingCache.h"
 #include <sstream>
 #include "../PocoHandler/SimplePocoHandler.h"
@@ -15,9 +12,8 @@ void ratingSendRoutine(UsersRatingCache& cache)
 {
 	while (runThread)
 	{
-		cache.invalidateCaches();
 		auto ratings = cache.getMessagesToSend();
-		std::cout << "got a " << ratings.size() << " rating messages" << std::endl;
+		std::cout << "\n\ngot a " << ratings.size() << " rating messages\n" << std::endl;
 
 		std::this_thread::sleep_for(std::chrono::minutes(1));
 	}
@@ -54,6 +50,8 @@ int main()
 		std::stringstream ss(message.message());
 		ss >> id >> isConnected;
 		ratingCache.updateConnectedCache(id, isConnected);
+		if(isConnected)
+			std::cout << ratingCache.getUserRating(id);
 	};
 
 	auto dealReceivedCallback = [&channel, &ratingCache](const AMQP::Message &message,

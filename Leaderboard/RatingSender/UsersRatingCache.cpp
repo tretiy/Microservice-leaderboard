@@ -7,7 +7,7 @@ UsersRatingCache::UsersRatingCache()
 {
 	try
 	{
-		dbConnection.connect("postgresql://postgres:tree328@localhost:5433/ratingDB");
+		dbConnection.connect("postgresql://postgres@localhost:5433/ratingDB");
 		dbConnection.begin();
 		makeRatingCache();
 		makeNamesAndConnectedCaches();
@@ -133,16 +133,12 @@ std::vector<std::string> UsersRatingCache::getMessagesToSend()
 	messagesToSend.reserve(connectedCache.size());
 	for(auto& key : connectedCache)
 	{
-		auto ratingLines = getUserRating(key);
-		std::string message{ std::to_string(key) + " " + std::to_string(ratingLines.size()) + " " };
-		for (auto& rating : ratingLines)
-			message += rating;
-		messagesToSend.push_back(message);
+		messagesToSend.push_back(getUserRating(key));
 	}
 	return messagesToSend;
 }
 
-std::vector<RatingLine> UsersRatingCache::getUserRating(int id)
+std::string UsersRatingCache::getUserRating(int id)
 {
 	std::vector<RatingLine> ratingForUser;
 	auto topEndIndex = std::min(topCountToShow, ratingCache.size());
@@ -159,7 +155,7 @@ std::vector<RatingLine> UsersRatingCache::getUserRating(int id)
 	for(int i = topEndIndex; i < std::min(topEndIndex + 21, ratingCache.size()); ++i)
 		ratingForUser.push_back(ratingCache[i]);
 
-	return ratingForUser;
+	return getRatingString(id, ratingForUser);
 }
 
 std::string UsersRatingCache::getUserNameString(int id)
@@ -186,4 +182,15 @@ std::string UsersRatingCache::getUserNameString(int id)
 	}
 
 	return "";
+}
+
+std::string UsersRatingCache::getRatingString(int id, std::vector<RatingLine>& ratingLines)
+{
+	std::string ratingStr{ std::to_string(id) + " " + std::to_string(ratingLines.size()) + " " };
+	for (auto& rating : ratingLines)
+	{
+		rating.name = getUserNameString(rating.id);
+		ratingStr += rating;
+	}
+	return ratingStr;
 }
